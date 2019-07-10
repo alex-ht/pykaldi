@@ -1,6 +1,7 @@
 # Dockerfile for building PyKaldi image from Ubuntu 16.04 image
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
+RUN sed -i "s:archive.:tw.archive.:g" /etc/apt/sources.list
 # Install necessary system packages
 RUN apt-get update \
     && apt-get install -y \
@@ -14,11 +15,12 @@ RUN apt-get update \
     g++ \
     git \
     graphviz \
-    libatlas3-base \
+    libatlas-base-dev \
     libtool \
     make \
     pkg-config \
     subversion \
+    sox \
     unzip \
     wget \
     zlib1g-dev
@@ -36,13 +38,14 @@ RUN pip install --upgrade pip \
     ninja
 
 # Copy pykaldi directory into the container
-COPY . /pykaldi
+ADD . /pykaldi
 
 # Install Protobuf, CLIF, Kaldi and PyKaldi
-RUN cd /pykaldi/tools \
-    && ./check_dependencies.sh \
-    && ./install_protobuf.sh \
-    && ./install_clif.sh \
-    && ./install_kaldi.sh \
-    && cd .. \
-    && python setup.py install
+WORKDIR /pykaldi/tools
+RUN ./check_dependencies.sh
+RUN ./install_protobuf.sh
+RUN ./install_clif.sh
+RUN ./install_kaldi.sh
+
+WORKDIR /pykaldi
+RUN python setup.py install
